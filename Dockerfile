@@ -10,32 +10,36 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libapache2-mod-security2 \
     && docker-php-ext-install pdo pdo_mysql zip
 
-# Enable Apache Rewrite Module
-RUN a2enmod rewrite
+# Enable Apache Rewrite and Headers Module
+RUN a2enmod rewrite headers
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy app files
+# Copy application source
 COPY . .
 
-# Install Composer (multi-stage build for cleaner image)
+# Ensure public/.htaccess is copied
+COPY public/.htaccess public/.htaccess
+
+# Install Composer from official image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Laravel permissions
+# Set proper permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
-
-# Set appropriate permissions
 RUN chmod -R 775 storage bootstrap/cache
-
-# Expose Apache port
-EXPOSE 80
 
 # Set Apache DocumentRoot to /public
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
-# Start Apache in foreground
+# Expose port 80
+EXPOSE 80
+
+# Start Apache
 CMD ["apache2-foreground"]

@@ -1,21 +1,17 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Don't rewrite requests to real files or directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Send all other requests to index.php
+    RewriteRule ^ index.php [L]
+</IfModule>
+
 <IfModule mod_headers.c>
     Header always set Access-Control-Allow-Origin "*"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     Header always set Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization, X-Requested-With"
-</IfModule>
-
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-
-    # Do not rewrite existing files or directories
-    RewriteCond %{REQUEST_FILENAME} -d [OR]
-    RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule ^ - [L]
-
-    # Prevent infinite redirects on OPTIONS (preflight)
-    RewriteCond %{REQUEST_METHOD} OPTIONS
-    RewriteRule ^(.*)$ $1 [R=200,L]
-
-    # Send all other requests to index.php
-    RewriteRule ^ index.php [L]
 </IfModule>
