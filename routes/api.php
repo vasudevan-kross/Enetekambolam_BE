@@ -62,6 +62,11 @@ use App\Http\Controllers\DeliveryRoutesController;
 //     return $request->user();
 // });
 
+Route::options('/{any}', function () {
+    return response()->json([], 200);
+})->where('any', '.*');
+
+
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get("get_check_time", [TimeCheckController::class, 'checkTimeAvailability']);
 
