@@ -22,18 +22,29 @@ WORKDIR /var/www/html
 # Copy application source
 COPY . .
 
-# Ensure public/.htaccess is copied
+# Ensure public/.htaccess is copied (redundant after COPY . ., but kept for clarity)
 COPY public/.htaccess public/.htaccess
 
 # Install Composer from official image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install PHP dependencies
+# Remove old dependencies and lock file to ensure a fresh install
+RUN rm -rf vendor composer.lock
+
+# (Optional) Clear Composer cache
+RUN composer clear-cache
+
+# Install PHP dependencies fresh
 RUN composer install --no-dev --optimize-autoloader
 
 # Set proper permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
+
+# Clear Laravel caches
+RUN php artisan config:clear && \
+    php artisan cache:clear && \
+    php artisan route:clear
 
 # Set Apache DocumentRoot to /public
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
