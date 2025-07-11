@@ -1,0 +1,92 @@
+/* Add this to your CSS file */
+.container{
+    width: 100%;
+
+}
+.list-group {
+    font-size: 18px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    list-style: none;
+    padding: 0;
+}
+.pt-5{
+    font-size: 15px;
+    font-weight: 700;
+}
+.list-group-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #ccc;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.btn-custom {
+    background-color: #007BFF; /* Change this to your desired background color */
+    color: #fff; /* Text color */
+    padding: 10px 20px; /* Adjust padding to control button size */
+    border: none;
+    border-radius: 5px;
+    font-size: 16px; /* Adjust font size as needed */
+    text-decoration: none;
+}
+
+.btn-custom:hover {
+    background-color: #0056b3; /* Change this to your desired hover background color */
+    color: #fff; /* Text color on hover */
+}
+.center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; /* This centers content vertically within the viewport height */
+    text-align: center;
+   
+}
+
+/* Additional styles if needed */
+.center-content > * {
+    margin-bottom: 20px; /* Add spacing between elements if needed */
+}
+.h3-bg {
+    background-color: whitesmoke; /* Replace 'your-color-here' with your desired background color */
+    padding: 10px; /* Adjust padding as needed */
+}
+
+/* Add this to your CSS file */
+.custom-form-group {
+    margin-bottom: 20px; 
+    font-size: 17px;/* Add spacing between form groups */
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+.form-section{
+    width: 500px;
+
+}
+.label-section{
+    flex: 2;
+}
+.input-section{
+    flex: 4;
+    margin-left: 10px;
+    height: 25px;
+}
+
+
+.custom-input {
+    border: 2px solid #007BFF; /* Add a border to the input fields */
+    border-radius: 5px;
+    padding: 10px;
+    width: 100%; /* Make the input fields take up the full width of the container */
+    transition: border-color 0.3s ease; /* Add a smooth transition for the border color */
+}
+
+.custom-input:focus {
+    border-color: #0056b3; /* Change border color on focus */
+}
+
