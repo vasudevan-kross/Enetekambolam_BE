@@ -5,6 +5,7 @@ namespace App\Http;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use App\Http\Middleware\InstallationMiddleware;
+
 class Kernel extends HttpKernel
 {
     /**
@@ -17,6 +18,7 @@ class Kernel extends HttpKernel
     protected $middleware = [
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
+        \App\Http\Middleware\GlobalCors::class,
         \Fruitcake\Cors\HandleCors::class,
         // \App\Http\Middleware\CORS::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
