@@ -62,9 +62,11 @@ use App\Http\Controllers\DeliveryRoutesController;
 //     return $request->user();
 // });
 
+
 Route::options('/{any}', function () {
-    return response()->json([], 200);
+    return response()->json(['message' => 'Preflight OK'], 200);
 })->where('any', '.*');
+
 
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
