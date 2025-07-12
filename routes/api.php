@@ -63,8 +63,8 @@ use App\Http\Controllers\DeliveryRoutesController;
 // });
 
 
-Route::options('/{any}', function () {
-    return response()->json(['message' => 'Preflight OK'], 200);
+Route::options('{any}', function () {
+    return response()->json(['status' => 'OK'], 200);
 })->where('any', '.*');
 
 
