@@ -7,3 +7,10 @@
 
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Optional: Unset CORS headers to prevent Apache from interfering
+<IfModule mod_headers.c>
+    Header unset Access-Control-Allow-Origin
+    Header unset Access-Control-Allow-Methods
+    Header unset Access-Control-Allow-Headers
+</IfModule>
