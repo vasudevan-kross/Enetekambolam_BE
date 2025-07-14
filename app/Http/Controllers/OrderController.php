@@ -827,6 +827,9 @@ class OrderController extends Controller
       $dataModel->delivery_instruction = $request->delivery_instruction ?? "";
       $dataModel->razorpay_order_id = $request->razorpay_order_id ?? null;
       $dataModel->trasation_id = $transactionId;
+      if (isset($request->coupon_id)) {
+        $dataModel->coupon_discount_value = $request->coupon_discount_value ?? 0;
+      }
       $dataModel->created_at = $timeStamp;
       $dataModel->updated_at = $timeStamp;
       if ($statusData['response'] === 200 && isset($statusData['data']) && $statusData['data']['value'] === "true") {
@@ -838,7 +841,7 @@ class OrderController extends Controller
       $dataTransactionModel->order_id = $dataModel->id;
       $dataTransactionModel->save();
       if (isset($request->coupon_id)) {
-        $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id);
+        $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id, $request->coupon_discount_value);
       }
       // Delete Cart Items
       CartModel::where("user_id", $request->user_id)->delete();
@@ -974,6 +977,9 @@ class OrderController extends Controller
       $dataModel->delivery_charge = $request->delivery_charge ?? null;
       $dataModel->delivery_instruction = $request->delivery_instruction ?? "";
       $dataModel->razorpay_order_id = $request->razorpay_order_id ?? null;
+      if (isset($request->coupon_id)) {
+        $dataModel->coupon_discount_value = $request->coupon_discount_value ?? 0;
+      }
       $dataModel->trasation_id = $transactionId;
       $dataModel->created_at = $timeStamp;
       $dataModel->updated_at = $timeStamp;
@@ -982,7 +988,7 @@ class OrderController extends Controller
       }
       $dataModel->save();
       if (isset($request->coupon_id)) {
-        $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id);
+        $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id, $request->coupon_discount_value);
       }
 
       // Link Transaction to Order
@@ -1018,7 +1024,7 @@ class OrderController extends Controller
     }
   }
 
-  public function recordCouponUsage(int $couponId, int $userId, int $orderId): bool
+  public function recordCouponUsage(int $couponId, int $userId, int $orderId, float $couponDiscountValue): bool
   {
     try {
       $alreadyUsed = DB::table('coupon_usages')
@@ -1031,6 +1037,7 @@ class OrderController extends Controller
           'coupon_id' => $couponId,
           'user_id' => $userId,
           'order_id' => $orderId,
+          'coupon_discount_value' => $couponDiscountValue ?? 0,
           'used_at' => now(),
           'created_at' => now(),
           'updated_at' => now(),
@@ -1927,6 +1934,9 @@ class OrderController extends Controller
         $dataModel->order_type = $request->order_type;
       }
 
+      if (isset($request->coupon_id)) {
+        $dataModel->coupon_discount_value = $request->coupon_discount_value ?? 0;
+      }
       $dataModel->created_at = $timeStamp;
       $dataModel->updated_at = $timeStamp;
       $result = ReferralController::completeReferral($request->user_id);
@@ -1950,7 +1960,7 @@ class OrderController extends Controller
       // Save the transaction model
       $transactionSaved = $dataTransactionModel->save();
       if (isset($request->coupon_id)) {
-        $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id);
+        $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id, $request->coupon_discount_value);
       }
 
       // Check if payment mode is 0 (wallet-based)
@@ -2166,7 +2176,9 @@ class OrderController extends Controller
           $dataModel->order_type = $request->order_type;
         }
 
-
+        if (isset($request->coupon_id)) {
+          $dataModel->coupon_discount_value = $request->coupon_discount_value ?? 0;
+        }
         $dataModel->created_at = $timeStamp;
         $dataModel->updated_at = $timeStamp;
         $qResponce = $dataModel->save();
@@ -2188,7 +2200,7 @@ class OrderController extends Controller
                 $transactionModel->order_id = $dataModel->id;
                 $transactionModel->save();
                 if (isset($request->coupon_id)) {
-                  $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id);
+                  $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id, $request->coupon_discount_value);
                 }
               }
             } else {

@@ -94,6 +94,7 @@ class PaymentController extends Controller
                     'wallet_added_amount' => $data['wallet_added_amount'] ?? 0,
                     'product_details' => json_encode($productDetail),
                     'coupon_id' => $data['coupon_id'] ?? null,
+                    'coupon_discount_value' =>  $data['coupon_id'] && $data['coupon_discount_value'] ?? 0,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

@@ -106,6 +106,7 @@ class RazorpayWebhookController extends Controller
                             'razorpay_order_id' => $razorpayOrderId,
                             'product_details' => $pendingOrder->product_details,
                             'coupon_id' => $pendingOrder->coupon_id ?? null,
+                            'coupon_discount_value' => $pendingOrder->coupon_discount_value ?? 0,
                             'wallet_added_amount' => $pendingOrder->wallet_added_amount ?? 0,
                         ]);
 
@@ -134,6 +135,7 @@ class RazorpayWebhookController extends Controller
                             'selected_days_for_weekly' => $pendingOrder->selected_days_for_weekly,
                             'razorpay_order_id' => $razorpayOrderId,
                             'coupon_id' => $pendingOrder->coupon_id ?? null,
+                            'coupon_discount_value' => $pendingOrder->coupon_discount_value ?? 0,
                             'wallet_added_amount' => $pendingOrder->wallet_added_amount ?? 0,
                             'isFromrazorpay' => true,
                         ]);
