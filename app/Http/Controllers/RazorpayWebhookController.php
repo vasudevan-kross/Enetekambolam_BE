@@ -102,10 +102,11 @@ class RazorpayWebhookController extends Controller
                             'payment_id' => $orderData['id'] ?? null,
                             'payment_type' => $pendingOrder->payment_type,
                             'payment_mode' => $pendingOrder->payment_mode,
-                            'payment_description' => $pendingOrder->payment_description ?? '',
+                            'Payment_description' => $pendingOrder->payment_description ?? '',
                             'razorpay_order_id' => $razorpayOrderId,
                             'product_details' => $pendingOrder->product_details,
                             'coupon_id' => $pendingOrder->coupon_id ?? null,
+                            'wallet_added_amount' => $pendingOrder->wallet_added_amount ?? 0,
                         ]);
 
                         $response = $orderController->addRazorpayCardAndOrderData($orderRequest);
@@ -128,11 +129,13 @@ class RazorpayWebhookController extends Controller
                             'payment_id' => $orderData['id'] ?? null,
                             'payment_type' => $pendingOrder->payment_type,
                             'payment_mode' => $pendingOrder->payment_mode,
-                            'payment_description' => $pendingOrder->payment_description ?? '',
+                            'Payment_description' => $pendingOrder->payment_description ?? '',
                             'subscription_type' => $pendingOrder->subscription_type,
                             'selected_days_for_weekly' => $pendingOrder->selected_days_for_weekly,
                             'razorpay_order_id' => $razorpayOrderId,
                             'coupon_id' => $pendingOrder->coupon_id ?? null,
+                            'wallet_added_amount' => $pendingOrder->wallet_added_amount ?? 0,
+                            'isFromrazorpay' => true,
                         ]);
 
                         $response = $orderController->addOrderData($orderRequest);

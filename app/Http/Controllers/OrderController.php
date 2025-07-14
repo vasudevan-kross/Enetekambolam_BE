@@ -791,12 +791,13 @@ class OrderController extends Controller
       $dataTransactionModel->save();
 
       // Update Wallet
-      if ($request->payment_mode == 0) {
+      if ($request->payment_mode == 0 && $request->wallet_added_amount > 0) {
         $dataModelUser = User::where("id", $request->user_id)->first();
         if ($dataModelUser && isset($request->payment_type)) {
-          if (in_array($request->payment_type, [1, 3])) {
-            $dataModelUser->wallet_amount = ($dataModelUser->wallet_amount ?? 0) + $request->order_amount;
-          } elseif ($request->payment_type == 2 && $dataModelUser->wallet_amount >= $request->order_amount) {
+          // if (in_array($request->payment_type, [1, 3])) {
+          //   $dataModelUser->wallet_amount = ($dataModelUser->wallet_amount ?? 0) + $request->order_amount;
+          // } else
+          if ($request->payment_type == 2 && $dataModelUser->wallet_amount >= $request->order_amount) {
             $dataModelUser->wallet_amount -= $request->order_amount;
           }
           $dataModelUser->save();
@@ -941,9 +942,10 @@ class OrderController extends Controller
       if ($request->payment_mode == 0) {
         $dataModelUser = User::where("id", $request->user_id)->first();
         if ($dataModelUser && isset($request->payment_type)) {
-          if (in_array($request->payment_type, [1, 3])) {
-            $dataModelUser->wallet_amount = ($dataModelUser->wallet_amount ?? 0) + $request->order_amount;
-          } elseif ($request->payment_type == 2 && $dataModelUser->wallet_amount >= $request->order_amount) {
+          // if (in_array($request->payment_type, [1, 3])) {
+          //   $dataModelUser->wallet_amount = ($dataModelUser->wallet_amount ?? 0) + $request->order_amount;
+          // } else
+          if ($request->payment_type == 2 && $dataModelUser->wallet_amount >= $request->order_amount) {
             $dataModelUser->wallet_amount -= $request->order_amount;
           }
           $dataModelUser->save();
@@ -1952,29 +1954,66 @@ class OrderController extends Controller
       }
 
       // Check if payment mode is 0 (wallet-based)
+      // if ($request->payment_mode == 0) {
+      //   $dataModelUser = User::where("id", $request->user_id)->first();
+      //   if ($dataModelUser) {
+      //     // Perform wallet operation based on payment type
+      //     // if (in_array($request->payment_type, [1, 3])) {
+      //     //   $dataModelUser->wallet_amount = ($dataModelUser->wallet_amount ?? 0) + $request->order_amount;
+      //     // } else
+      //     if ($request->payment_type == 2 && $dataModelUser->wallet_amount >= $request->order_amount) {
+      //       $dataModelUser->wallet_amount -= $request->order_amount;
+      //     }
+
+      //     // Save wallet changes
+      //     $walletSaved = $dataModelUser->save();
+      //     if (!$walletSaved) {
+      //       DB::rollBack(); // Rollback the transaction if wallet update fails
+      //       return response([
+      //         "response" => 201,
+      //         'status' => false,
+      //         'message' => "Wallet update failed",
+      //       ], 200);
+      //     }
+      //   }
+      // }
       if ($request->payment_mode == 0) {
         $dataModelUser = User::where("id", $request->user_id)->first();
-        if ($dataModelUser) {
-          // Perform wallet operation based on payment type
-          if (in_array($request->payment_type, [1, 3])) {
-            $dataModelUser->wallet_amount = ($dataModelUser->wallet_amount ?? 0) + $request->order_amount;
-          } elseif ($request->payment_type == 2 && $dataModelUser->wallet_amount >= $request->order_amount) {
-            $dataModelUser->wallet_amount -= $request->order_amount;
+
+        if ($dataModelUser && $request->payment_type == 2) {
+          $walletAddedAmount = $request->wallet_added_amount ?? 0;
+          $isFromRazorpay = $request->isFromrazorpay ?? false;
+          $shouldUpdateWallet = false;
+
+          if ($isFromRazorpay) {
+            // Only allow if wallet_added_amount > 0
+            if ($walletAddedAmount > 0 && $dataModelUser->wallet_amount >= $request->order_amount) {
+              $dataModelUser->wallet_amount -= $request->order_amount;
+              $shouldUpdateWallet = true;
+            }
+          } else {
+            // Normal case
+            if ($dataModelUser->wallet_amount >= $request->order_amount) {
+              $dataModelUser->wallet_amount -= $request->order_amount;
+              $shouldUpdateWallet = true;
+            }
           }
 
-          // Save wallet changes
-          $walletSaved = $dataModelUser->save();
-          if (!$walletSaved) {
-            DB::rollBack(); // Rollback the transaction if wallet update fails
-            return response([
-              "response" => 201,
-              'status' => false,
-              'message' => "Wallet update failed",
-            ], 200);
+          // Save wallet if required
+          if ($shouldUpdateWallet) {
+            $walletSaved = $dataModelUser->save();
+
+            if (!$walletSaved) {
+              DB::rollBack();
+              return response([
+                "response" => 201,
+                'status' => false,
+                'message' => "Wallet update failed",
+              ], 200);
+            }
           }
         }
       }
-
       // Proceed with stock update only if wallet deduction was successful
       if ($transactionSaved && $qResponce) {
         $dataModel->trasation_id = $dataTransactionModel->id;
@@ -2148,6 +2187,9 @@ class OrderController extends Controller
               if ($transactionModel) {
                 $transactionModel->order_id = $dataModel->id;
                 $transactionModel->save();
+                if (isset($request->coupon_id)) {
+                  $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id);
+                }
               }
             } else {
               // If wallet deduction fails, delete order and transaction entries
