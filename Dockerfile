@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     libapache2-mod-security2 \
     && docker-php-ext-install pdo pdo_mysql zip
 
-# Enable Apache Rewrite and Headers Module
+# Enable Apache Rewrite and Headers Modules
 RUN a2enmod rewrite headers
 
 # Set working directory
@@ -37,9 +37,14 @@ RUN composer clear-cache
 # Install PHP dependencies fresh
 RUN composer install --no-dev --optimize-autoloader
 
-# Set proper permissions
-RUN chown -R www-data:www-data storage bootstrap/cache
-RUN chmod -R 775 storage bootstrap/cache
+# Ensure uploads directory exists and is writable
+RUN mkdir -p /var/www/html/public/uploads/images && \
+    chown -R www-data:www-data /var/www/html/public/uploads && \
+    chmod -R 775 /var/www/html/public/uploads
+
+# Set proper permissions for Laravel storage
+RUN chown -R www-data:www-data storage bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache
 
 # Clear Laravel caches
 RUN php artisan config:clear && \
@@ -48,6 +53,9 @@ RUN php artisan config:clear && \
 
 # Set Apache DocumentRoot to /public
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
+# Optional: Create symbolic link to storage (if you're using Laravel's storage system)
+RUN php artisan storage:link || true
 
 # Expose port 80
 EXPOSE 80
