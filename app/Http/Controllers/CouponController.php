@@ -104,8 +104,9 @@ class CouponController extends Controller
                 'first_time_user_only' => 'boolean',
                 'start_at' => 'nullable|date',
                 'expires_at' => 'nullable|date|after_or_equal:start_at',
+                "max_discount_amount" => 'nullable|numeric',
                 'is_active' => 'boolean',
-                'description' => 'nullable|string', // ✅ Add this line
+                'description' => 'nullable|string',
             ])->validated();
 
             $coupon = Coupon::create($validated);
@@ -225,6 +226,7 @@ class CouponController extends Controller
                 'first_time_user_only' => 'boolean',
                 'start_at' => 'nullable|date',
                 'expires_at' => 'nullable|date|after_or_equal:start_at',
+                "max_discount_amount" => 'nullable|numeric',
                 'is_active' => 'boolean',
                 'description' => 'nullable|string', // ✅ Add this line
             ])->validated();

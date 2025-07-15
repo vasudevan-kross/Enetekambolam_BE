@@ -50,6 +50,7 @@ class OrderController extends Controller
           'orders.status',
           'orders.delivery_instruction',
           'orders.selected_days_for_weekly',
+          'orders.coupon_discount_value',
 
           'product.title',
           'product.qty_text',
@@ -104,6 +105,7 @@ class OrderController extends Controller
           'orders.status',
           'orders.delivery_instruction',
           'orders.selected_days_for_weekly',
+          'orders.coupon_discount_value',
 
           'product.title',
           'product.qty_text',

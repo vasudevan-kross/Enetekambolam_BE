@@ -13,6 +13,7 @@ class Coupon extends Model
         'min_cart_value',
         'max_uses_per_user',
         'first_time_user_only',
+        'max_discount_amount',
         'start_at',
         'expires_at',
         'is_active',
