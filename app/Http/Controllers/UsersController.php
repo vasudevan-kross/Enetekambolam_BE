@@ -795,6 +795,8 @@ class UsersController extends Controller
             $transaction = new TransactionsModel;
             $transaction->user_id = $request->id;
             $transaction->amount = $request->wallet_amount;
+            $transaction->previous_balance = $previousWalletAmount ?? 0;
+            $transaction->source_type = 1;
             $transaction->type = $difference >= 0 ? 1 : 2;
             $transaction->description = $description;
             $transaction->payment_id = $transaction->payment_id ?? $this->generatePaymentId();

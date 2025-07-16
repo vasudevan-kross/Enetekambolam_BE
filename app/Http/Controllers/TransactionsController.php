@@ -285,9 +285,12 @@ class TransactionsController extends Controller
     else {
       try {
 
+
         $timeStamp = date("Y-m-d H:i:s");
         $dataModel = new TransactionsModel;
         $dataModel->user_id  = $request->user_id;
+        $dataModelUser = User::where("id", $request->user_id)->first();
+        $previousBalance = $dataModelUser ? ($dataModelUser->wallet_amount ?? 0) : 0;
         if (isset($request->payment_id)) {
           $dataModel->payment_id  = $request->payment_id;
         } else {
@@ -296,6 +299,8 @@ class TransactionsController extends Controller
         if (isset($request->order_id)) {
           $dataModel->order_id = $request->order_id;
         }
+        $dataModel->previous_balance = $previousBalance; // Store previous wallet amount
+        $dataModel->source_type = $request->source_type ?? 1; // Default
         $dataModel->amount = $request->amount;
         $dataModel->type  = $request->type;
         $dataModel->description  = $request->description;
@@ -307,9 +312,6 @@ class TransactionsController extends Controller
         if ($qResponce) {
 
           if (isset($request->type)) {
-
-            $dataModelUser = User::where("id", $request->user_id)->first();
-
             if ($dataModelUser) {
               if ($request->type == 1 || $request->type == 3) {
 

@@ -937,6 +937,7 @@ class OrderController extends Controller
       $dataTransactionModel->user_id = $request->user_id;
       $dataTransactionModel->payment_id = $request->payment_id ?? $this->generatePaymentId();
       $dataTransactionModel->amount = $request->order_amount;
+      $dataTransactionModel->source_type = $request->source_type ?? 2;
       $dataTransactionModel->type = $request->payment_type;
       $dataTransactionModel->description = $request->Payment_description;
       $dataTransactionModel->created_at = $timeStamp;
@@ -946,6 +947,7 @@ class OrderController extends Controller
       // Update Wallet
       if ($request->payment_mode == 0) {
         $dataModelUser = User::where("id", $request->user_id)->first();
+        $dataTransactionModel->previous_balance = $dataModelUser->wallet_amount ?? 0;
         if ($dataModelUser && isset($request->payment_type)) {
           // if (in_array($request->payment_type, [1, 3])) {
           //   $dataModelUser->wallet_amount = ($dataModelUser->wallet_amount ?? 0) + $request->order_amount;
@@ -1885,6 +1887,11 @@ class OrderController extends Controller
       $timeStamp = date("Y-m-d H:i:s");
       $orderNumber = $this->generateOrderNumber();
 
+      $result = ReferralController::completeReferral($request->user_id);
+      if (!$result['success']) {
+        Log::warning('Referral not applied: ' . $request->user_id . ' ' . $result['message']);
+      }
+
       // Create new order model
       $dataModel = new OrderModel;
       $dataModel->user_id = $request->user_id;
@@ -1941,11 +1948,6 @@ class OrderController extends Controller
       }
       $dataModel->created_at = $timeStamp;
       $dataModel->updated_at = $timeStamp;
-      $result = ReferralController::completeReferral($request->user_id);
-      if (!$result['success']) {
-        Log::warning('Referral not applied: ' . $request->user_id . ' ' . $result['message']);
-      }
-
       // Save the order model to the database
       $qResponce = $dataModel->save();
 
@@ -1954,6 +1956,11 @@ class OrderController extends Controller
       $dataTransactionModel->user_id = $request->user_id;
       $dataTransactionModel->payment_id = $request->payment_id ?? $this->generatePaymentId();
       $dataTransactionModel->amount = $request->order_amount;
+      if (isset($request->source_type)) {
+        $dataTransactionModel->source_type = $request->source_type;
+      } else {
+        $dataTransactionModel->source_type = $request->wallet_added_amount > 0 ? 1 : 2;
+      }
       $dataTransactionModel->type = $request->payment_type;
       $dataTransactionModel->description = $request->Payment_description;
       $dataTransactionModel->created_at = $timeStamp;
@@ -1991,7 +1998,7 @@ class OrderController extends Controller
       // }
       if ($request->payment_mode == 0) {
         $dataModelUser = User::where("id", $request->user_id)->first();
-
+        $dataTransactionModel->previous_balance = $dataModelUser->wallet_amount ?? 0;
         if ($dataModelUser && $request->payment_type == 2) {
           $walletAddedAmount = $request->wallet_added_amount ?? 0;
           $isFromRazorpay = $request->isFromrazorpay ?? false;

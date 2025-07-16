@@ -131,7 +131,9 @@ class ReferralController extends Controller
                         'user_id' => $referrer->id,
                         'payment_id' => $paymentId,
                         'amount' => $referralRewardAmount,
-                        'description' => 'Referral bonus for referring user: ' . $user->name,
+                        'previous_amount' => $referrer->wallet_amount ?? 0,
+                        'Source_type' => 1,
+                        'description' => 'Referral bonus credited to wallet for referring user: ' . $user->name,
                         'type' => 4,
                         'payment_mode' => 1,
                         'created_at' => now(),
@@ -375,7 +377,7 @@ class ReferralController extends Controller
             }
 
             // Check if referred user already has orders
-            $hasOrders = DB::table('orders')->where('user_id', 552)->exists();
+            $hasOrders = DB::table('orders')->where('user_id', $referredUserId)->exists();
 
             if ($hasOrders) {
                 return [
@@ -407,7 +409,7 @@ class ReferralController extends Controller
                     'user_id' => $referrer->id,
                     'payment_id' => $paymentId,
                     'amount' => $referralRewardAmount,
-                    'description' => 'Referral bonus for referring user: ' . $referredUser->name,
+                    'description' => 'Referral bonus credited to wallet for referring user: ' . $referredUser->name,
                     'type' => 4, // referral
                     'payment_mode' => 1, // wallet
                     'created_at' => now(),
