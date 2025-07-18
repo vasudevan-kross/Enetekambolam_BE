@@ -447,18 +447,181 @@ class OrderController extends Controller
   // }
 
 
+  // public function getOrderProductsByDateRange(Request $request)
+  // {
+  //   try {
+  //     $request->validate([
+  //       'start_date' => 'required|date',
+  //       'end_date' => 'required|date|after_or_equal:start_date',
+  //       'vendor_id' => 'nullable|integer' // ✅ Optional vendor_id filter
+  //     ]);
+
+  //     $startDate = Carbon::parse($request->start_date)->startOfDay();
+  //     $endDate = Carbon::parse($request->end_date)->endOfDay();
+  //     $vendorId = $request->vendor_id; // ✅ Get vendor_id from request
+
+  //     $orders = DB::table('orders')
+  //       ->where(function ($query) use ($startDate, $endDate) {
+  //         $query->whereBetween('start_date', [$startDate, $endDate])
+  //           ->orWhereNotNull('subscription_type');
+  //       })
+  //       ->get();
+
+  //     $filteredProducts = [];
+  //     $mergedProducts = [];
+
+  //     foreach ($orders as $order) {
+  //       try {
+  //         $subscriptionStart = Carbon::parse($order->start_date);
+  //         $pauseDates = [];
+
+  //         if (is_null($order->subscription_type)) {
+  //           $productDetails = json_decode($order->product_detail, true);
+  //           if (json_last_error() !== JSON_ERROR_NONE) continue;
+
+  //           foreach ($productDetails as $product) {
+  //             $productData = $this->formatOneTimeProductData($order, $product);
+
+  //             if ($vendorId && $productData['vendor_id'] != $vendorId) {
+  //               continue; // ✅ Skip if vendor_id doesn't match
+  //             }
+
+  //             $filteredProducts[] = $productData;
+  //           }
+  //         } else {
+  //           if ($order->pause_dates) {
+  //             $pauseDates = array_map('trim', explode(',', trim($order->pause_dates, '[]')));
+  //           }
+
+  //           $subscriptionEnd = $this->calculateEndDate($subscriptionStart, $order, $pauseDates);
+  //           if ($order->subscription_type == 1) {
+  //             if ($subscriptionStart->between($startDate, $endDate)) {
+  //               $productData = $this->formatSubscriptionProductData($order, $subscriptionStart->toDateString());
+
+  //               if ($vendorId && $productData['vendor_id'] != $vendorId) {
+  //                 continue; // ✅ Skip if vendor_id doesn't match
+  //               }
+
+  //               $filteredProducts[] = $productData;
+  //             }
+  //           } elseif ($order->subscription_type == 2) {
+  //             $selectedDaysJson = preg_replace('/(\w+):/', '"$1":', $order->selected_days_for_weekly);
+  //             $selectedDays = json_decode($selectedDaysJson, true);
+
+  //             if (json_last_error() !== JSON_ERROR_NONE) {
+  //               Log::error("JSON decode error for selected_days_for_weekly in Order ID: {$order->id}");
+  //               continue;
+  //             }
+
+  //             $selectedDayCodes = array_column($selectedDays, 'dayCode');
+
+  //             for ($date = $subscriptionStart->copy(); $date <= $subscriptionEnd; $date->addDay()) {
+  //               $dayCode = ($date->dayOfWeekIso % 7);
+
+  //               if (in_array($dayCode, $selectedDayCodes) && $date->between($startDate, $endDate)) {
+  //                 $productData = $this->formatSubscriptionProductData(
+  //                   $order,
+  //                   $date->toDateString(),
+  //                   $selectedDays[array_search($dayCode, array_column($selectedDays, 'dayCode'))]['qty']
+  //                 );
+
+  //                 if ($vendorId && $productData['vendor_id'] != $vendorId) {
+  //                   continue; // ✅ Skip if vendor_id doesn't match
+  //                 }
+
+  //                 $filteredProducts[] = $productData;
+  //               }
+  //             }
+  //           } elseif ($order->subscription_type == 3) {
+  //             for ($date = $subscriptionStart->copy(); $date <= $subscriptionEnd; $date->addDay()) {
+  //               if ($date->between($startDate, $endDate)) {
+  //                 $productData = $this->formatSubscriptionProductData($order, $date->toDateString());
+
+  //                 if ($vendorId && $productData['vendor_id'] != $vendorId) {
+  //                   continue; // ✅ Skip if vendor_id doesn't match
+  //                 }
+
+  //                 $filteredProducts[] = $productData;
+  //               }
+  //             }
+  //           } elseif ($order->subscription_type == 4) {
+  //             for ($date = $subscriptionStart->copy(); $date <= $subscriptionEnd; $date->addDays(2)) {
+  //               if ($date->between($startDate, $endDate)) {
+  //                 $productData = $this->formatSubscriptionProductData($order, $date->toDateString());
+
+  //                 if ($vendorId && $productData['vendor_id'] != $vendorId) {
+  //                   continue; // ✅ Skip if vendor_id doesn't match
+  //                 }
+
+  //                 $filteredProducts[] = $productData;
+  //               }
+  //             }
+  //           }
+  //         }
+  //       } catch (Exception $e) {
+  //         Log::error("Error processing order ID {$order->id}: " . $e->getMessage());
+  //       }
+  //     }
+
+  //     // 🔹 Merge Products by `product_id`
+  //     foreach ($filteredProducts as $product) {
+  //       $productId = $product['product_id'];
+
+  //       if (!isset($mergedProducts[$productId])) {
+  //         $mergedProducts[$productId] = [
+  //           'product_id' => $productId,
+  //           'product_name' => $product['product_name'],
+  //           'image' => $product['image'],
+  //           'vendor_id' => $product['vendor_id'], // ✅ Include vendor_id
+  //           'vendor_name' => $product['vendor_name'], // ✅ Include vendor_name
+  //           'total_qty' => 0,
+  //           'price' => $product['price'],
+  //           'mrp' => $product['mrp'],
+  //           'tax' => $product['tax'],
+  //           'total_price' => 0
+  //         ];
+  //       }
+
+  //       // ✅ Add quantity only in merged products
+  //       $mergedProducts[$productId]['total_qty'] += $product['qty'];
+  //       $mergedProducts[$productId]['total_price'] += $product['total_price'];
+  //     }
+
+  //     // Convert associative array to indexed array
+  //     $finalMergedProducts = array_values($mergedProducts);
+  //     $vendorList = DB::table('vendor')
+  //       ->select('id as vendor_id', 'supplier_name as vendor_name')
+  //       ->get();
+  //     return response([
+  //       "response" => 200,
+  //       "data" => [
+  //         "order_details" => $filteredProducts,
+  //         "merged_products" => $finalMergedProducts,
+  //         "vendor_details" => $vendorList
+  //       ]
+  //     ], 200);
+  //   } catch (Exception $e) {
+  //     Log::error("Error fetching orders: " . $e->getMessage());
+  //     return response([
+  //       "response" => 500,
+  //       "error" => "An error occurred while processing the request."
+  //     ], 500);
+  //   }
+  // }
+
+
   public function getOrderProductsByDateRange(Request $request)
   {
     try {
       $request->validate([
         'start_date' => 'required|date',
         'end_date' => 'required|date|after_or_equal:start_date',
-        'vendor_id' => 'nullable|integer' // ✅ Optional vendor_id filter
+        'vendor_id' => 'nullable|integer'
       ]);
 
       $startDate = Carbon::parse($request->start_date)->startOfDay();
       $endDate = Carbon::parse($request->end_date)->endOfDay();
-      $vendorId = $request->vendor_id; // ✅ Get vendor_id from request
+      $vendorId = $request->vendor_id;
 
       $orders = DB::table('orders')
         ->where(function ($query) use ($startDate, $endDate) {
@@ -482,8 +645,14 @@ class OrderController extends Controller
             foreach ($productDetails as $product) {
               $productData = $this->formatOneTimeProductData($order, $product);
 
+              // ✅ Null check before pushing
+              if (!$productData || !isset($productData['product_id'], $productData['qty'], $productData['total_price'])) {
+                Log::warning("Skipping null/invalid product data (One-time) for Order ID: {$order->id}");
+                continue;
+              }
+
               if ($vendorId && $productData['vendor_id'] != $vendorId) {
-                continue; // ✅ Skip if vendor_id doesn't match
+                continue;
               }
 
               $filteredProducts[] = $productData;
@@ -494,39 +663,67 @@ class OrderController extends Controller
             }
 
             $subscriptionEnd = $this->calculateEndDate($subscriptionStart, $order, $pauseDates);
+
             if ($order->subscription_type == 1) {
               if ($subscriptionStart->between($startDate, $endDate)) {
                 $productData = $this->formatSubscriptionProductData($order, $subscriptionStart->toDateString());
 
+                if (!$productData || !isset($productData['product_id'], $productData['qty'], $productData['total_price'])) {
+                  Log::warning("Skipping invalid productData (type 1) for Order ID: {$order->id}");
+                  continue;
+                }
+
                 if ($vendorId && $productData['vendor_id'] != $vendorId) {
-                  continue; // ✅ Skip if vendor_id doesn't match
+                  continue;
                 }
 
                 $filteredProducts[] = $productData;
               }
             } elseif ($order->subscription_type == 2) {
-              $selectedDaysJson = preg_replace('/(\w+):/', '"$1":', $order->selected_days_for_weekly);
-              $selectedDays = json_decode($selectedDaysJson, true);
+              if (empty($order->selected_days_for_weekly)) {
+                Log::warning("Empty selected_days_for_weekly for Order ID: {$order->id}");
+                continue;
+              }
+
+              $selectedDaysString = $order->selected_days_for_weekly;
+              $selectedDays = json_decode($selectedDaysString, true);
 
               if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error("JSON decode error for selected_days_for_weekly in Order ID: {$order->id}");
+                $selectedDaysJson = preg_replace('/(\w+):/', '"$1":', $selectedDaysString);
+                $selectedDays = json_decode($selectedDaysJson, true);
+              }
+
+              if (json_last_error() !== JSON_ERROR_NONE || empty($selectedDays)) {
+                Log::error("JSON decode error for selected_days_for_weekly in Order ID: {$order->id}. Data: " . $selectedDaysString);
                 continue;
               }
 
               $selectedDayCodes = array_column($selectedDays, 'dayCode');
+              if (empty($selectedDayCodes)) {
+                Log::warning("Empty selectedDayCodes for Order ID: {$order->id}");
+                continue;
+              }
 
               for ($date = $subscriptionStart->copy(); $date <= $subscriptionEnd; $date->addDay()) {
                 $dayCode = ($date->dayOfWeekIso % 7);
-
                 if (in_array($dayCode, $selectedDayCodes) && $date->between($startDate, $endDate)) {
-                  $productData = $this->formatSubscriptionProductData(
-                    $order,
-                    $date->toDateString(),
-                    $selectedDays[array_search($dayCode, array_column($selectedDays, 'dayCode'))]['qty']
-                  );
+                  $qty = 1;
+                  foreach ($selectedDays as $dayData) {
+                    if (isset($dayData['dayCode']) && $dayData['dayCode'] == $dayCode) {
+                      $qty = isset($dayData['qty']) ? (int)$dayData['qty'] : 1;
+                      break;
+                    }
+                  }
+
+                  $productData = $this->formatSubscriptionProductData($order, $date->toDateString(), $qty);
+
+                  if (!$productData || !isset($productData['product_id'], $productData['qty'], $productData['total_price'])) {
+                    Log::warning("Skipping invalid productData (type 2) for Order ID: {$order->id}");
+                    continue;
+                  }
 
                   if ($vendorId && $productData['vendor_id'] != $vendorId) {
-                    continue; // ✅ Skip if vendor_id doesn't match
+                    continue;
                   }
 
                   $filteredProducts[] = $productData;
@@ -537,8 +734,13 @@ class OrderController extends Controller
                 if ($date->between($startDate, $endDate)) {
                   $productData = $this->formatSubscriptionProductData($order, $date->toDateString());
 
+                  if (!$productData || !isset($productData['product_id'], $productData['qty'], $productData['total_price'])) {
+                    Log::warning("Skipping invalid productData (type 3) for Order ID: {$order->id}");
+                    continue;
+                  }
+
                   if ($vendorId && $productData['vendor_id'] != $vendorId) {
-                    continue; // ✅ Skip if vendor_id doesn't match
+                    continue;
                   }
 
                   $filteredProducts[] = $productData;
@@ -549,8 +751,13 @@ class OrderController extends Controller
                 if ($date->between($startDate, $endDate)) {
                   $productData = $this->formatSubscriptionProductData($order, $date->toDateString());
 
+                  if (!$productData || !isset($productData['product_id'], $productData['qty'], $productData['total_price'])) {
+                    Log::warning("Skipping invalid productData (type 4) for Order ID: {$order->id}");
+                    continue;
+                  }
+
                   if ($vendorId && $productData['vendor_id'] != $vendorId) {
-                    continue; // ✅ Skip if vendor_id doesn't match
+                    continue;
                   }
 
                   $filteredProducts[] = $productData;
@@ -563,8 +770,13 @@ class OrderController extends Controller
         }
       }
 
-      // 🔹 Merge Products by `product_id`
+      // ✅ Merge logic with null/key checks
       foreach ($filteredProducts as $product) {
+        if (!is_array($product) || !isset($product['product_id'], $product['qty'], $product['total_price'])) {
+          Log::warning("Invalid product during merging: " . json_encode($product));
+          continue;
+        }
+
         $productId = $product['product_id'];
 
         if (!isset($mergedProducts[$productId])) {
@@ -572,8 +784,8 @@ class OrderController extends Controller
             'product_id' => $productId,
             'product_name' => $product['product_name'],
             'image' => $product['image'],
-            'vendor_id' => $product['vendor_id'], // ✅ Include vendor_id
-            'vendor_name' => $product['vendor_name'], // ✅ Include vendor_name
+            'vendor_id' => $product['vendor_id'],
+            'vendor_name' => $product['vendor_name'],
             'total_qty' => 0,
             'price' => $product['price'],
             'mrp' => $product['mrp'],
@@ -582,16 +794,15 @@ class OrderController extends Controller
           ];
         }
 
-        // ✅ Add quantity only in merged products
         $mergedProducts[$productId]['total_qty'] += $product['qty'];
         $mergedProducts[$productId]['total_price'] += $product['total_price'];
       }
 
-      // Convert associative array to indexed array
       $finalMergedProducts = array_values($mergedProducts);
       $vendorList = DB::table('vendor')
         ->select('id as vendor_id', 'supplier_name as vendor_name')
         ->get();
+
       return response([
         "response" => 200,
         "data" => [
@@ -609,9 +820,19 @@ class OrderController extends Controller
     }
   }
 
+
   private function formatOneTimeProductData($order, $product)
   {
     try {
+      // ✅ Validate essential keys
+      $requiredKeys = ['product_id', 'qty', 'price', 'mrp', 'tax', 'total_price'];
+      foreach ($requiredKeys as $key) {
+        if (!isset($product[$key])) {
+          Log::warning("Missing key '{$key}' in product data for Order ID: {$order->id}");
+          return null;
+        }
+      }
+
       $productData = DB::table('product')
         ->select(
           'product.id',
@@ -619,41 +840,43 @@ class OrderController extends Controller
           'product.qty_text',
           'images.image',
           'product.vendor_id',
-          'vendor.supplier_name' // Fetch vendor name
+          'vendor.supplier_name'
         )
         ->leftJoin('images', function ($join) {
           $join->on('images.table_id', '=', 'product.id')
             ->where('images.table_name', '=', 'product')
             ->where('images.image_type', '=', 1);
         })
-        ->leftJoin('vendor', 'vendor.id', '=', 'product.vendor_id') // Join vendor table
-        ->where('product.id', $product['product_id'])
+        ->leftJoin('vendor', 'vendor.id', '=', 'product.vendor_id')
+        ->where('product.id', (int)$product['product_id']) // cast to int
         ->first();
 
       if (!$productData) {
+        Log::warning("Product not found for ID {$product['product_id']} in Order ID: {$order->id}");
         return null;
       }
 
       return [
         'order_id' => $order->id,
         'delivery_date' => $order->start_date,
-        'product_id' => $productData->id,
+        'product_id' => (int)$productData->id,
         'product_name' => $productData->title,
         'image' => $productData->image,
-        'qty' => $product['qty'],
-        'price' => $product['price'],
-        'mrp' => $product['mrp'],
-        'tax' => $product['tax'],
-        'total_price' => $product['total_price'],
+        'qty' => (int)$product['qty'],
+        'price' => (float)$product['price'],
+        'mrp' => (float)$product['mrp'],
+        'tax' => (float)$product['tax'],
+        'total_price' => (float)$product['total_price'],
         'order_type' => 'One-Time',
-        'vendor_id' => $productData->vendor_id,  // ✅ Vendor ID
-        'vendor_name' => $productData->supplier_name, // ✅ Vendor Name
+        'vendor_id' => $productData->vendor_id,
+        'vendor_name' => $productData->supplier_name,
       ];
     } catch (Exception $e) {
       Log::error("Error fetching product details for order ID {$order->id}: " . $e->getMessage());
       return null;
     }
   }
+
 
   private function formatSubscriptionProductData($order, $deliveryDate, $quantity = null)
   {

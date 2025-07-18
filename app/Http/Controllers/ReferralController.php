@@ -132,7 +132,7 @@ class ReferralController extends Controller
                         'payment_id' => $paymentId,
                         'amount' => $referralRewardAmount,
                         'previous_amount' => $referrer->wallet_amount ?? 0,
-                        'Source_type' => 1,
+                        'source_type' => 1,
                         'description' => 'Referral bonus credited to wallet for referring user: ' . $user->name,
                         'type' => 4,
                         'payment_mode' => 1,
