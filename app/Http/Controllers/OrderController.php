@@ -1009,6 +1009,7 @@ class OrderController extends Controller
       $dataTransactionModel->user_id = $request->user_id;
       $dataTransactionModel->payment_id = $request->payment_id ?? $this->generatePaymentId();
       $dataTransactionModel->amount = $request->order_amount;
+      $dataTransactionModel->source_type = $request->wallet_added_amount > 0 ? 1 : 2;
       $dataTransactionModel->type = $request->payment_type;
       $dataTransactionModel->description = $request->Payment_description;
       $dataTransactionModel->created_at = $timeStamp;
@@ -1018,6 +1019,7 @@ class OrderController extends Controller
       // Update Wallet
       if ($request->payment_mode == 0 && $request->wallet_added_amount > 0) {
         $dataModelUser = User::where("id", $request->user_id)->first();
+        $dataTransactionModel->previous_balance = $dataModelUser->wallet_amount ?? 0;
         if ($dataModelUser && isset($request->payment_type)) {
           // if (in_array($request->payment_type, [1, 3])) {
           //   $dataModelUser->wallet_amount = ($dataModelUser->wallet_amount ?? 0) + $request->order_amount;
@@ -1064,6 +1066,7 @@ class OrderController extends Controller
 
       // Link Transaction to Order
       $dataTransactionModel->order_id = $dataModel->id;
+
       $dataTransactionModel->save();
       if (isset($request->coupon_id)) {
         $this->recordCouponUsage($request->coupon_id, $request->user_id, $dataModel->id, $request->coupon_discount_value);
