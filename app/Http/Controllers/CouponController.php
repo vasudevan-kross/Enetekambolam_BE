@@ -59,7 +59,7 @@ class CouponController extends Controller
                     $q->whereNull('start_at')->orWhere('start_at', '<=', $now);
                 })
                 ->where(function ($q) use ($now) {
-                    $q->whereNull('expires_at')->orWhere('expires_at', '>=', $now);
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>=', $now->toDateString());
                 })
                 ->get()
                 ->filter(function ($coupon) use ($usageCounts, $hasOrder) {
@@ -153,10 +153,14 @@ class CouponController extends Controller
                 'message' => 'This coupon is not active.',
             ]);
         }
+        
+        $today = Carbon::now();
+        $startDate = $coupon->start_at ? Carbon::parse($coupon->start_at) : null;
+        $endDate = $coupon->expires_at ? Carbon::parse($coupon->expires_at)->endOfDay() : null;
 
-        $now = now();
-        if (($coupon->start_at && $now->lt($coupon->start_at)) ||
-            ($coupon->expires_at && $now->gt($coupon->expires_at))
+        if (
+            ($startDate && $today->lt($startDate)) ||
+            ($endDate && $today->gt($endDate))
         ) {
             return response()->json([
                 'response' => 201,
